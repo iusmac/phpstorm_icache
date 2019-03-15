@@ -64,11 +64,7 @@ startPhpStorm() {
 
     [ -n "$1" ] && params=$@
     
-    if [ "$EXECUTED_IN" = "terminal" ]; then
-        (exec /bin/sh $PHPSTORM_SH_PATH $params 2>&1) &
-    else
-        exec /bin/sh $PHPSTORM_SH_PATH $params &
-    fi
+    exec /bin/sh $PHPSTORM_SH_PATH $params &
     
     if ! isPhpStormLaunched; then
         sendError
