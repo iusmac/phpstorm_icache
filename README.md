@@ -32,3 +32,6 @@ Terminal=false
 ### Helpful
 For the first starts it is recommended to leave the notifications active to ensure correct execution. To disable it edit the `SHOW_NOTIFICATIONS` variable.
 For the unclear behavior if you are not using the terminal look at the log file in `PHPSTORM_CACHE_PATH/ICache-logs.log`
+
+### TODO
+- [ ] Before mounting in RAM, check if there is enough space
