@@ -44,7 +44,7 @@ prepareDirs() {
         mkdir $ORIGINAL_SYSTEM_PATH || (sendError ; exit)
     fi
     if [ ! -d $BACKUP_SYSTEM_PATH ]; then  
-        syncFrom "original-to-backup" || (sendError ; exit)
+        syncFrom $originalToBackup || (sendError ; exit)
         rm -rf $ORIGINAL_SYSTEM_PATH/
         mkdir $ORIGINAL_SYSTEM_PATH
     fi
@@ -55,7 +55,7 @@ mountToRam() {
     if ! isCacheMounted; then
         iSudo mount -t tmpfs -o uid=$MOUNT_AS_USER,gid=$MOUNT_AS_USER,mode=0700 tmpfs $ORIGINAL_SYSTEM_PATH
         say "Mounted cache directory to RAM" $?
-        syncFrom "backup-to-original" || (sendError ; exit)
+        syncFrom $backupToOriginal || (sendError ; exit)
     fi
 }
 
@@ -199,13 +199,13 @@ notificator() {
 
 syncFrom() {
     case $1 in
-    "original-to-backup")
+    $originalToBackup)
         rsync \
         -avuq \
         --delete \
         "$ORIGINAL_SYSTEM_PATH/" "$BACKUP_SYSTEM_PATH"
     ;;
-    "backup-to-original")
+    $backupToOriginal)
         rsync \
         -avuq \
         --delete \
@@ -217,7 +217,7 @@ syncFrom() {
 finish() {
     ! isCacheMounted && exit
     
-    syncFrom "original-to-backup"
+    syncFrom $originalToBackup
     say "Flushed cache to disk" $?
     # Wait until mount point is busy to prevent errors
     while lsof $ORIGINAL_SYSTEM_PATH &>/dev/null; do
@@ -256,6 +256,9 @@ PHPSTORM_CACHE_PATH=$(readlink -f $PHPSTORM_CACHE_PATH)
 ORIGINAL_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system"
 BACKUP_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system_backup"
 [ -t 1 ] && EXECUTED_IN="terminal" || EXECUTED_IN="gui"
+
+readonly originalToBackup=1
+readonly backupToOriginal=2
 
 # Rewire all errors for GUI
 if [ "$EXECUTED_IN" = "gui" ]; then
