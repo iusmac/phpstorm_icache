@@ -44,7 +44,7 @@ prepareDirs() {
         mkdir $ORIGINAL_SYSTEM_PATH || (sendError ; exit)
     fi
     if [ ! -d $BACKUP_SYSTEM_PATH ]; then  
-        syncFrom $originalToBackup || (sendError ; exit)
+        syncFrom $ORIGINAL_TO_BACKUP || (sendError ; exit)
         rm -rf $ORIGINAL_SYSTEM_PATH/
         mkdir $ORIGINAL_SYSTEM_PATH
     fi
@@ -55,7 +55,7 @@ mountToRam() {
     if ! isCacheMounted; then
         iSudo mount -t tmpfs -o uid=$MOUNT_AS_USER,gid=$MOUNT_AS_USER,mode=0700 tmpfs $ORIGINAL_SYSTEM_PATH
         say "Mounted cache directory to RAM" $?
-        syncFrom $backupToOriginal || (sendError ; exit)
+        syncFrom $BACKUP_TO_ORIGINAL || (sendError ; exit)
     fi
 }
 
@@ -160,7 +160,7 @@ getGuiSudoAccess() {
                 --text="You have exceeded the number (3) of allowed sudo login attempts\nTry again!" \
                 &>/dev/null
             return 1
-        elif [ "$passwdPromptState" -eq 1 ] || [ "$passwdPromptState" -eq 5 ]; then # cancel button (1) pressed or timeout (5) exceeded
+        elif [ "$passwdPromptState" -eq "$CANCEL_PRESSED" ] || [ "$passwdPromptState" -eq "$TIMEOUT_EXCEEDED" ]; then
             return 1
         fi
     done
@@ -199,13 +199,13 @@ notificator() {
 
 syncFrom() {
     case $1 in
-    $originalToBackup)
+    $ORIGINAL_TO_BACKUP)
         rsync \
         -avuq \
         --delete \
         "$ORIGINAL_SYSTEM_PATH/" "$BACKUP_SYSTEM_PATH"
     ;;
-    $backupToOriginal)
+    $BACKUP_TO_ORIGINAL)
         rsync \
         -avuq \
         --delete \
@@ -217,7 +217,7 @@ syncFrom() {
 finish() {
     ! isCacheMounted && exit
     
-    syncFrom $originalToBackup
+    syncFrom $ORIGINAL_TO_BACKUP
     say "Flushed cache to disk" $?
     # Wait until mount point is busy to prevent errors
     while lsof $ORIGINAL_SYSTEM_PATH &>/dev/null; do
@@ -255,10 +255,13 @@ readonly PHPSTORM_SH_PATH=$(readlink -f $PHPSTORM_SH_PATH)
 readonly PHPSTORM_CACHE_PATH=$(readlink -f $PHPSTORM_CACHE_PATH)
 readonly ORIGINAL_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system"
 readonly BACKUP_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system_backup"
-[ -t 1 ] && readonly EXECUTED_IN="terminal" || readonly EXECUTED_IN="gui"
 
-readonly originalToBackup=1
-readonly backupToOriginal=2
+# States
+readonly ORIGINAL_TO_BACKUP=1
+readonly BACKUP_TO_ORIGINAL=2
+readonly CANCEL_PRESSED=1
+readonly TIMEOUT_EXCEEDED=5
+[ -t 1 ] && readonly EXECUTED_IN="terminal" || readonly EXECUTED_IN="gui"
 
 # Rewire all errors for GUI
 if [ "$EXECUTED_IN" = "gui" ]; then
