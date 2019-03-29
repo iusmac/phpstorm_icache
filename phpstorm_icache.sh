@@ -251,18 +251,18 @@ fi
 # Handle exits
 trap 'finish' 0 1 2 3 6
 
-PHPSTORM_SH_PATH=$(readlink -f $PHPSTORM_SH_PATH)
-PHPSTORM_CACHE_PATH=$(readlink -f $PHPSTORM_CACHE_PATH)
-ORIGINAL_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system"
-BACKUP_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system_backup"
-[ -t 1 ] && EXECUTED_IN="terminal" || EXECUTED_IN="gui"
+readonly PHPSTORM_SH_PATH=$(readlink -f $PHPSTORM_SH_PATH)
+readonly PHPSTORM_CACHE_PATH=$(readlink -f $PHPSTORM_CACHE_PATH)
+readonly ORIGINAL_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system"
+readonly BACKUP_SYSTEM_PATH="$PHPSTORM_CACHE_PATH/system_backup"
+[ -t 1 ] && readonly EXECUTED_IN="terminal" || readonly EXECUTED_IN="gui"
 
 readonly originalToBackup=1
 readonly backupToOriginal=2
 
 # Rewire all errors for GUI
 if [ "$EXECUTED_IN" = "gui" ]; then
-    STDERR_FILE="$PHPSTORM_CACHE_PATH/ICache-logs.log"
+    readonly STDERR_FILE="$PHPSTORM_CACHE_PATH/ICache-logs.log"
     truncate -s 0 "$STDERR_FILE"
     exec 2> "$STDERR_FILE"
 fi
