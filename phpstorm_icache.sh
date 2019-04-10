@@ -53,6 +53,7 @@ prepareDirs() {
 
 mountToRam() {
     if ! isCacheMounted; then
+        checkIfSufficientRAM || (notificator "Insufficient memory when mounting" ; exit)
         iSudo mount -t tmpfs -o uid=$MOUNT_AS_USER,gid=$MOUNT_AS_USER,mode=0700 tmpfs $ORIGINAL_SYSTEM_PATH
         say "Mounted cache directory to RAM" $?
         syncFrom $BACKUP_TO_ORIGINAL || (sendError ; exit)
@@ -232,6 +233,15 @@ sendError() {
     if [ "$EXECUTED_IN" = "gui" ]; then
         notificator "Something goes wrong! Check logs in '$STDERR_FILE'"
     fi
+}
+
+checkIfSufficientRAM() {
+    local sysPathSize=$(du --bytes --max-depth=0 -0 $ORIGINAL_SYSTEM_PATH | awk '{ print $1 }')
+    local availableRAM=$(free --bytes | awk '/Mem:/ { print $4 }')
+    if [ "$sysPathSize" -gt "$availableRAM" ]; then
+        return 1
+    fi
+    return 0
 }
 
 # Permit only one instance
